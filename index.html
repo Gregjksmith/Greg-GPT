@@ -73,9 +73,9 @@
     </div>
 
     <script>
-		async function run()
+		async function createSession(modelUrl)
 		{
-			const session = await ort.InferenceSession.create('model.onnx');
+			return await ort.InferenceSession.create(modelUrl, {executionProviders: ["wasm"]});
 		}
 		
 		function getResponse(input)
@@ -89,6 +89,9 @@
 		
         function changeContent() 
 		{
+			const modelPath = 'https://github.com/Gregjksmith/Greg-GPT/raw/refs/heads/main/mnist_model.onnx';
+			var session = createSession(modelPath)
+		
 			var input = document.getElementById("comment").value;
 			var response = getResponse(input);
             document.getElementById("dynamicContent").innerHTML = "<p>" + response + "</p>";

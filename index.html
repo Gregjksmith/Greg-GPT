@@ -78,6 +78,13 @@
 			return await ort.InferenceSession.create(modelUrl, {executionProviders: ["wasm"]});
 		}
 		
+		async function getVocabulary()
+		{
+			const response = await fetch('vocabulary.json'); // Wait for the network request
+			const data = await response.json(); // Wait for the response to be parsed as JSON
+			return data;
+		}
+		
 		function getResponse(input)
 		{
 			if(input.includes("hello"))
@@ -90,8 +97,7 @@
         function changeContent() 
 		{
 			//const modelPath = 'https://github.com/Gregjksmith/Greg-GPT/raw/refs/heads/main/mnist_model.onnx';
-			const modelPath = 'mnist_model.onnx';
-			var session = createSession(modelPath)
+			var vocabulary = getVocabulary();
 		
 			var input = document.getElementById("comment").value;
 			var response = getResponse(input);

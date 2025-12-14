@@ -98,13 +98,11 @@
 		{
 			//const modelPath = 'https://github.com/Gregjksmith/Greg-GPT/raw/refs/heads/main/mnist_model.onnx';
 			var vocabulary = getVocabulary();
+			console.log("vocabulary loaded");
+			console.log(vocabulary["a"]);
 		
 			var input = document.getElementById("comment").value;
 			var response = getResponse(input);
-			if(session != null)
-				response = "Session exists";
-			else
-				response = "Session is null";
 			
             document.getElementById("dynamicContent").innerHTML = "<p>" + response + "</p>";
         }

@@ -94,6 +94,11 @@
 		
 			var input = document.getElementById("comment").value;
 			var response = getResponse(input);
+			if(session != null)
+				response = "Session exists";
+			else
+				response = "Session is null";
+			
             document.getElementById("dynamicContent").innerHTML = "<p>" + response + "</p>";
         }
     </script>

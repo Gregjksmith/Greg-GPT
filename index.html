@@ -73,14 +73,11 @@
     </div>
 
     <script>
-		async function createSession(modelUrl)
+		async function getVocabulary()
 		{
-			return await ort.InferenceSession.create(modelUrl, {executionProviders: ["wasm"]});
-		}
-		
-		function getVocabulary()
-		{
-			return require('vocabulary.json');
+			const response = await fetch('vocabulary.json');
+			const data = await response.json();
+			return data;
 		}
 		
 		function getResponse(input)
@@ -92,10 +89,11 @@
 			return "not so rude";
 		}
 		
-        function changeContent()
+        async function changeContent()
 		{
 			//const modelPath = 'https://github.com/Gregjksmith/Greg-GPT/raw/refs/heads/main/mnist_model.onnx';
-			var vocabulary = getVocabulary();
+			var vocabulary = await getVocabulary();
+			console.log("vocabulary loaded");
 			console.log(vocabulary);
 		
 			var input = document.getElementById("comment").value;

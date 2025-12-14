@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Greg-GPT</title>
+    <style>
+        body 
+		{
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container 
+		{
+            text-align: center;
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1 
+		{
+            color: #000000;
+			text-align:center;
+        }
+		textarea
+		{
+			resize: none;
+			border-color:#00000020
+		}
+        button 
+		{
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover 
+		{
+            background-color: #0056b3;
+        }
+        .content 
+		{
+            margin-top: 20px;
+            font-size: 18px;
+            color: #555;
+        }
+    </style>
+	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.6.0/dist/tf.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Ask Greg Anything</h1> 
+		<textarea id="comment" name="comment" rows="4" cols="50" placeholder=""></textarea>
+        <p></p>
+
+        <button onclick="changeContent()">Ask</button>
+
+        <div class="content" id="dynamicContent">
+            <p></p>
+        </div>
+    </div>
+
+    <script>
+		async function run()
+		{
+			const session = await ort.InferenceSession.create('model.onnx');
+		}
+		
+		function getResponse(input)
+		{
+			if(input.includes("hello"))
+			{
+				return "sup";
+			}
+			return "not so rude";
+		}
+		
+        function changeContent() 
+		{
+			var input = document.getElementById("comment").value;
+			var response = getResponse(input);
+            document.getElementById("dynamicContent").innerHTML = "<p>" + response + "</p>";
+        }
+    </script>
+
+</body>
+</html>

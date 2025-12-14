@@ -82,6 +82,7 @@
 		{
 			const response = await fetch('vocabulary.json'); // Wait for the network request
 			const data = await response.json(); // Wait for the response to be parsed as JSON
+			console.log(data);
 			return data;
 		}
 		
@@ -94,12 +95,10 @@
 			return "not so rude";
 		}
 		
-        function changeContent() 
+        function changeContent()
 		{
 			//const modelPath = 'https://github.com/Gregjksmith/Greg-GPT/raw/refs/heads/main/mnist_model.onnx';
 			var vocabulary = getVocabulary();
-			console.log("vocabulary loaded");
-			console.log(vocabulary);
 		
 			var input = document.getElementById("comment").value;
 			var response = getResponse(input);

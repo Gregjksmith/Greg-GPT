@@ -76,8 +76,12 @@
 		async function getVocabulary()
 		{
 			const response = await fetch('vocabulary.json');
-			const data = await response.json();
-			return data;
+			return await response.json();
+		}
+		
+		async function getOnnxModel(onnxModelPath)
+		{
+			return await ort.InferenceSession.create(modelPath);
 		}
 		
 		function getResponse(input)
@@ -93,8 +97,7 @@
 		{
 			//const modelPath = 'https://github.com/Gregjksmith/Greg-GPT/raw/refs/heads/main/mnist_model.onnx';
 			var vocabulary = await getVocabulary();
-			console.log("vocabulary loaded");
-			console.log(vocabulary);
+			var onnxModel = await getOnnxModel("mnist_model.onnx");
 		
 			var input = document.getElementById("comment").value;
 			var response = getResponse(input);

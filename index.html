@@ -81,7 +81,7 @@
 		
 		async function getOnnxModel(onnxModelPath)
 		{
-			return await ort.InferenceSession.create(modelPath);
+			return await ort.InferenceSession.create(onnxModelPath);
 		}
 		
 		function getResponse(input)

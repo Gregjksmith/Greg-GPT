@@ -98,6 +98,7 @@
 			//const modelPath = 'https://github.com/Gregjksmith/Greg-GPT/raw/refs/heads/main/mnist_model.onnx';
 			var vocabulary = await getVocabulary();
 			var onnxModel = await getOnnxModel("mnist_model.onnx");
+			console.log(onnxModel);
 		
 			var input = document.getElementById("comment").value;
 			var response = getResponse(input);

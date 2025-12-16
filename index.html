@@ -57,6 +57,7 @@
     </style>
 	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.6.0/dist/tf.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+	<script src="tokenizer.js"></script>
 </head>
 <body>
 
@@ -73,11 +74,11 @@
     </div>
 
     <script>
-		async function getVocabulary()
-		{
-			const response = await fetch('vocabulary.json');
-			return await response.json();
-		}
+		//async function getVocabulary()
+		//{
+		//	const response = await fetch('vocabulary.json');
+		//	return await response.json();
+		//}
 		
 		async function getOnnxModel(onnxModelPath)
 		{
@@ -95,15 +96,28 @@
 		
         async function changeContent()
 		{
-			//const modelPath = 'https://github.com/Gregjksmith/Greg-GPT/raw/refs/heads/main/mnist_model.onnx';
-			var vocabulary = await getVocabulary();
-			var onnxModel = await getOnnxModel("mnist_model.onnx");
-			console.log(onnxModel);
-		
-			var input = document.getElementById("comment").value;
-			var response = getResponse(input);
+			var vocab = await createVocabulary();
+			const input = document.getElementById("comment").value;
+			const tokens = tokenizerEncode(vocab, input)
 			
-            document.getElementById("dynamicContent").innerHTML = "<p>" + response + "</p>";
+			const output = tokenizerDecode(vocab, tokens)
+			
+			document.getElementById("dynamicContent").innerHTML = "<p>" + output + "</p>";
+			
+			
+			//for (t of tok)
+			//	console.log(t);
+			
+			//return;
+		
+			//var vocabulary = await getVocabulary();
+			//var onnxModel = await getOnnxModel("mnist_model.onnx");
+			
+		
+			//var input = document.getElementById("comment").value;
+			//var response = getResponse(input);
+			
+            //document.getElementById("dynamicContent").innerHTML = "<p>" + response + "</p>";
         }
     </script>
 

@@ -47,7 +47,7 @@ class Vocabulary
 async function createVocabulary()
 {
 	const response = await fetch('vocabulary.json');
-	return await response.json();
+	return new Vocabulary(await response.json());
 	//const vocabulary = JSON.parse(jsonVocabularyString);
 	//return new Vocabulary(vocabulary);
 }

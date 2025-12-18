@@ -89,7 +89,7 @@ function tokenizerEncode(vocabulary, inputText)
 					tokens = tokens.concat(_tokenizeWord(nextSubword, true));
 					break;
 				}
-				else if(word.length == 1)
+				else if(subword.length == 1)
 				{
 					tokens.push(vocabulary._vocabularyMap["[UNK]"]);
 				}
@@ -101,7 +101,9 @@ function tokenizerEncode(vocabulary, inputText)
 	var t = [];
 	var words = _splitAndNormalize(inputText);
 	for (word of words)
-		t = t.concat(_tokenizeWord(word));
+	{
+		t = t.concat(_tokenizeWord(word.toLowerCase()));
+	}
 	
 	return t;
 }
@@ -135,7 +137,6 @@ function tokenizerDecode(vocabulary, tokens)
 	
 	function _capatalize(_word)
 	{
-		return _word;
 		return _word.charAt(0).toUpperCase() + _word.slice(1);
 	}
 	

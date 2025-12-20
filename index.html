@@ -80,9 +80,9 @@
 		//	return await response.json();
 		//}
 		
-		async function getOnnxModel(onnxModelPath)
+		async function getOnnxModel()
 		{
-			return await ort.InferenceSession.create(onnxModelPath);
+			return await ort.InferenceSession.create("model.onnx");
 		}
 		
 		function getResponse(input)
@@ -99,6 +99,8 @@
 			var vocab = await createVocabulary();
 			const input = document.getElementById("comment").value;
 			const tokens = tokenizerEncode(vocab, input)
+			
+			var model = await getOnnxModel();
 			
 			const output = tokenizerDecode(vocab, tokens)
 			

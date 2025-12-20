@@ -88,7 +88,7 @@
 		async function infer(text, vocabulary, session)
 		{
 			const inputTokens = tokenizerEncode(vocabulary, text);
-			const inputTensor = new onnx.Tensor(Float32Array.from(inputTokens), [1, inputTokens.length]);
+			const inputTensor = new ort.Tensor(Float32Array.from(inputTokens), [1, inputTokens.length]);
 			const feeds = { [session.inputNames[0]]: inputTensor }; // Use the model's input name
 			
 			// Run the inference

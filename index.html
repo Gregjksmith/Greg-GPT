@@ -80,9 +80,22 @@
 		//	return await response.json();
 		//}
 		
-		async function getOnnxModel()
+		async function getInferenceSession()
 		{
-			return await ort.InferenceSession.create("model.onnx");
+			return await ort.InferenceSession.create("model.onnx", { executionProviders: ["webgl", "wasm"]});
+		}
+		
+		async function infer(text, vocabulary, session)
+		{
+			const inputTokens = tokenizerEncode(vocabulary, text);
+			const inputTensor = new onnx.Tensor(Float32Array.from(inputTokens), [1, inputTokens.length]);
+			const feeds = { [session.inputNames[0]]: inputTensor }; // Use the model's input name
+			
+			// Run the inference
+			const outputMap = await session.run(feeds);
+			const outputData = outputMap[session.outputNames[0]].data;
+			
+			return tokenizerDecode(vocabulary, outputData)
 		}
 		
 		function getResponse(input)
@@ -100,11 +113,12 @@
 			const input = document.getElementById("comment").value;
 			const tokens = tokenizerEncode(vocab, input)
 			
-			var model = await getOnnxModel();
+			var session = await getInferenceSession();
+			const response = await infer(input, vocab, session);
 			
-			const output = tokenizerDecode(vocab, tokens)
+			//const output = tokenizerDecode(vocab, tokens)
 			
-			document.getElementById("dynamicContent").innerHTML = "<p>" + output + "</p>";
+			document.getElementById("dynamicContent").innerHTML = "<p>" + response + "</p>";
 			
 			
 			//for (t of tok)

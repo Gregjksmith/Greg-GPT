@@ -82,29 +82,57 @@
 		
 		async function getInferenceSession()
 		{
-			return await ort.InferenceSession.create("model.onnx", { executionProviders: ["webgl", "wasm"]});
+			//return await ort.InferenceSession.create("model.onnx", { executionProviders: ["webgl", "wasm"]});
+			const session = await ort.InferenceSession.create("model.onnx", {
+				executionProviders: ["webgl", "wasm"],
+			});
+			return session;
 		}
 		
 		async function infer(text, vocabulary, session)
 		{
-			const inputTokens = tokenizerEncode(vocabulary, text);
-			const inputTensor = new ort.Tensor(Float32Array.from(inputTokens), [1, inputTokens.length]);
-			const feeds = { [session.inputNames[0]]: inputTensor }; // Use the model's input name
-			
-			// Run the inference
-			const outputMap = await session.run(feeds);
-			const outputData = outputMap[session.outputNames[0]].data;
-			
-			return tokenizerDecode(vocabulary, outputData)
-		}
-		
-		function getResponse(input)
-		{
-			if(input.includes("hello"))
+		 	function argmax(_tensor)
 			{
-				return "sup";
+				const dims = _tensor.dims;
+				const sequenceLength = dims[0];
+				const vocabularySize = dims[2];
+
+				var outputTokens = []
+				const data = _tensor.data;
+				for(let sequenceIndex = 0; sequenceIndex < sequenceLength; sequenceIndex++)
+				{
+					var maxIndex = 0;
+					var maxVal = Number.MIN_VALUE;
+					for (let v = 0; v < vocabularySize; v++)
+					{
+						const sample = data[sequenceIndex * vocabularySize + v]
+						if(sample > maxVal)
+						{
+							maxVal = sample;
+							maxIndex = v;
+						}
+					}
+
+					outputTokens.push(maxIndex);
+				}
+				return outputTokens;
 			}
-			return "not so rude";
+
+			const inputTokens = tokenizerEncode(vocabulary, text);
+			const inputTensor = new ort.Tensor(Int32Array.from(inputTokens), [inputTokens.length, 1]);
+
+			const inputName = session.inputNames[0]
+			const outputName = session.outputNames[0]
+
+			var feeds = {};
+			feeds[inputName] = inputTensor;
+
+			const results = await session.run(feeds);
+			const output = results[session.outputNames[0]];
+			
+			const argMaxIndex = argmax(output);
+
+			return tokenizerDecode(vocabulary, argMaxIndex)
 		}
 		
         async function changeContent()
@@ -116,24 +144,7 @@
 			var session = await getInferenceSession();
 			const response = await infer(input, vocab, session);
 			
-			//const output = tokenizerDecode(vocab, tokens)
-			
 			document.getElementById("dynamicContent").innerHTML = "<p>" + response + "</p>";
-			
-			
-			//for (t of tok)
-			//	console.log(t);
-			
-			//return;
-		
-			//var vocabulary = await getVocabulary();
-			//var onnxModel = await getOnnxModel("mnist_model.onnx");
-			
-		
-			//var input = document.getElementById("comment").value;
-			//var response = getResponse(input);
-			
-            //document.getElementById("dynamicContent").innerHTML = "<p>" + response + "</p>";
         }
     </script>
 

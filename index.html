@@ -56,7 +56,7 @@
         }
     </style>
 	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.6.0/dist/tf.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.min.js"></script>
 	<script src="tokenizer.js"></script>
 </head>
 <body>
@@ -74,19 +74,19 @@
     </div>
 
     <script>
-		//async function getVocabulary()
-		//{
-		//	const response = await fetch('vocabulary.json');
-		//	return await response.json();
-		//}
+		let sessionPromise = null;
 		
+		window.addEventListener('load', () => { getInferenceSession(); });
+
 		async function getInferenceSession()
 		{
-			//return await ort.InferenceSession.create("model.onnx", { executionProviders: ["webgl", "wasm"]});
-			const session = await ort.InferenceSession.create("model.onnx", {
-				executionProviders: ["webgl", "wasm"],
-			});
-			return session;
+			if (!sessionPromise)
+			{
+				const sessionPromize = await ort.InferenceSession.create("model.onnx", {
+					executionProviders: ["webgl", "wasm"],
+				});
+			}
+			return sessionPromise;
 		}
 		
 		async function infer(text, vocabulary, session)

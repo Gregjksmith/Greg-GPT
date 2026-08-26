@@ -1,15 +1,3 @@
-
-const jsonVocabularyString = `
-	{\"[UNK]\": 0, \"[START]\": 1, \"[CLS]\": 2, \"[SEP]\": 3, \"[MASK]\": 4, \"[NULL]\": 5, 
-	\"a\": 6, \"b\": 7, \"c\": 8, \"d\": 9, \"e\": 10, \"f\": 11, \"g\": 12, \"h\": 13, \"i\": 14, 
-	\"j\": 15, \"k\": 16, \"l\": 17, \"m\": 18, \"n\": 19, \"o\": 20, \"p\": 21, \"q\": 22, \"r\": 23, 
-	\"s\": 24, \"t\": 25, \"u\": 26, \"v\": 27, \"w\": 28, \"x\": 29, \"y\": 30, \"z\": 31, \"##a\": 32, 
-	\"##b\": 33, \"##c\": 34, \"##d\": 35, \"##e\": 36, \"##f\": 37, \"##g\": 38, \"##h\": 39, \"##i\": 40, 
-	\"##j\": 41, \"##k\": 42, \"##l\": 43, \"##m\": 44, \"##n\": 45, \"##o\": 46, \"##p\": 47, \"##q\": 48, 
-	\"##r\": 49, \"##s\": 50, \"##t\": 51, \"##u\": 52, \"##v\": 53, \"##w\": 54, \"##x\": 55, \"##y\": 56, 
-	\"##z\": 57, \"!\": 58, \"##!\": 59, \"?\": 60, \"##?\": 61, \".\": 62, \"##.\": 63, \",\": 64, \"##,\": 65, 
-	\";\": 66, \"##;\": 67}`;
-
 const specialCharacters = {'\n':'[LINE_FEED]', '\0':'[NULL]'}
 const punctuation = ['!', '?', '.', ',', ';']
 const sentenceDelimiters = ['!', '?', '.']
@@ -25,6 +13,8 @@ const classificationCharacter = "[CLS]"
 const separationCharacter = "[SEP]"
 const maskCharacter = "[MASK]"
 const nullCharacter = "[NULL]"
+const startSequenceCharacter = '[START_S]'
+const endSequenceCharacter = '[END_S]'
 
 class Vocabulary
 {
@@ -48,14 +38,10 @@ async function createVocabulary()
 {
 	const response = await fetch('vocabulary.json');
 	return new Vocabulary(await response.json());
-	//const vocabulary = JSON.parse(jsonVocabularyString);
-	//return new Vocabulary(vocabulary);
 }
 
 async function getVocabulary()
 {
-	//const response = await fetch('vocabulary.json');
-	//return await response.json();
 	return JSON.parse(jsonVocabularyString);
 }
 

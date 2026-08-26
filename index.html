@@ -56,7 +56,7 @@
         }
     </style>
 	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.6.0/dist/tf.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.14.0/dist/ort.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
 	<script src="tokenizer.js"></script>
 </head>
 <body>
@@ -75,14 +75,14 @@
 
     <script>
 		let sessionPromise = null;
-		
+
 		window.addEventListener('load', () => { getInferenceSession(); });
 
 		async function getInferenceSession()
 		{
 			if (!sessionPromise)
 			{
-				const sessionPromize = await ort.InferenceSession.create("model.onnx", {
+				sessionPromise = await ort.InferenceSession.create("model.onnx", {
 					executionProviders: ["webgl", "wasm"],
 				});
 			}
@@ -91,57 +91,76 @@
 		
 		async function infer(text, vocabulary, session)
 		{
-		 	function argmax(_tensor)
+		 	function argmax(_tensor, _sequenceIndex)
 			{
 				const dims = _tensor.dims;
-				const sequenceLength = dims[0];
+				const batchIndex = dims[0]
+				const sequenceLength = dims[1];
 				const vocabularySize = dims[2];
 
-				var outputTokens = []
-				const data = _tensor.data;
-				for(let sequenceIndex = 0; sequenceIndex < sequenceLength; sequenceIndex++)
+				var maxIndex = 0;
+				var maxVal = Number.MIN_VALUE;
+				for(let v = 0; v < vocabularySize; v++)
 				{
-					var maxIndex = 0;
-					var maxVal = Number.MIN_VALUE;
-					for (let v = 0; v < vocabularySize; v++)
+					const sample = data[_sequenceIndex * vocabularySize + v];
+					if(sample > maxVal)
 					{
-						const sample = data[sequenceIndex * vocabularySize + v]
-						if(sample > maxVal)
-						{
-							maxVal = sample;
-							maxIndex = v;
-						}
+						maxVal = sample;
+						maxIndex = v;
 					}
-
-					outputTokens.push(maxIndex);
 				}
-				return outputTokens;
+				return maxIndex;
 			}
+			const maxGenSize = 2048;
+			const startToken = startSequenceCharacter;
+			const endToken = endSequenceCharacter;
+			const nullToken = nullCharacter;
 
-			const inputTokens = tokenizerEncode(vocabulary, text);
-			const inputTensor = new ort.Tensor(Int32Array.from(inputTokens), [inputTokens.length, 1]);
-
-			const inputName = session.inputNames[0]
+			const inputTokenName = session.inputNames[0]
+			const inputMaskName = session.inputNames[1]
 			const outputName = session.outputNames[0]
 
-			var feeds = {};
-			feeds[inputName] = inputTensor;
+			const maxSequenceLength = session.inputMetadata[0].shape[1]
+			let inputTokens = [startToken, ...tokenizerEncode(vocabulary, text)];
 
-			const results = await session.run(feeds);
-			const output = results[session.outputNames[0]];
-			
-			const argMaxIndex = argmax(output);
+			while (len(tokens) < maxGenSize)
+			{
+				let tokenInputs = inputTokens;
+				tokenInputs = tokenInputs.slice(0, maxSequenceLength);
+				while (inputTokens.legth < maxSequenceLength)
+					inputTokens.push(nullToken);
+				output_index = tokens.length - 1
 
-			return tokenizerDecode(vocabulary, argMaxIndex)
+				const mask = inputTokens.map(t => t == null ? 0 : 1);
+
+				const inputTensor = new ort.Tensor('int32', Int32Array.from(inputTokens), [1, inputTokens.length]);
+				const inputMask = new ort.Tensor('int32', Int32Array.from(mask), [1, mask.length]);
+
+				var feeds = {};
+				feeds[inputTokenName] = inputTensor;
+				feeds[inputMaskName] = inputMask;
+
+				const results = await session.run(feeds);
+				const output = results[session.outputNames[0]];
+
+				genToken = argmax(output, output_index);
+				if (genToken == endToken)
+					break;
+
+				tokens.push(genToken);
+			}
+
+			tokens = tokens.slice(1, tokens.length-1);
+			return tokenizerDecode(vocabulary, tokens)
 		}
 		
         async function changeContent()
 		{
 			var vocab = await createVocabulary();
+			var session = await getInferenceSession();
 			const input = document.getElementById("comment").value;
 			const tokens = tokenizerEncode(vocab, input)
 			
-			var session = await getInferenceSession();
 			const response = await infer(input, vocab, session);
 			
 			document.getElementById("dynamicContent").innerHTML = "<p>" + response + "</p>";

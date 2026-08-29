@@ -48,12 +48,28 @@
 		{
             background-color: #0056b3;
         }
+
+		button:disabled,
+		textarea:disabled
+		{
+			opacity: 0.5;
+			cursor: not-allowed
+		}
         .content 
 		{
             margin-top: 20px;
             font-size: 18px;
             color: #555;
+			max-width: 500px;
+    		overflow-wrap: break-word;
+    		word-break: break-word;
+    		white-space: normal;
         }
+		.auto-wrap {
+  			overflow-wrap: break-word;
+ 			word-break: break-all;
+		}
+
     </style>
 	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.6.0/dist/tf.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
@@ -65,10 +81,16 @@
 		<h1>Greg-GPT</h1>
 		<h2 id='subHeader'></h2>
 		<h3>ask</h3>
-		<textarea id="comment" name="comment" rows="4" cols="50" placeholder=""></textarea>
+
+		<textarea
+			id="comment"
+			name="comment"
+			rows="4"
+			cols="50"
+			disabled></textarea>
         <p></p>
 
-        <button onclick="changeContent()">Ask</button>
+        <button id="askButton" onclick="changeContent()">Chat</button>
 
         <div class="content" id="dynamicContent">
             <p></p>
@@ -78,7 +100,35 @@
     <script>
 		let sessionPromise = null;
 
-		window.addEventListener('load', () => { getInferenceSession(); });
+		const commentInput = document.getElementById("comment");
+		const askButton = document.getElementById("askButton");
+
+		window.addEventListener('load', async () => 
+			{ 
+				try
+				{
+					askButton.disabled = true
+					commentInput.textContent = "Loading...";
+
+					await getInferenceSession();
+
+					commentInput.textContent = "";
+
+					//has finshied loading
+					commentInput.disabled = false;
+					askButton.disabled = false
+
+					loadingMessage.textContent = "";
+				}
+				catch (error)
+				{
+					console.error("Failed to load Greg-GPT", error)
+
+					loadingMessage.textContent = "Unable to load Greg-GPT. Please refresh the page.";
+					commentInput.disabled = true;
+					askButton.disabled = true;
+				}
+			});
 
 		window.addEventListener("load", () => {
 			const messages = [
@@ -96,11 +146,20 @@
 				document.getElementById("subHeader").innerHTML = randomMessage;
 			});
 
+		async function resolveModelPath()
+		{
+			owner = "gregjksmith";
+			repo = "Greg-GPT";
+			ref = "main"
+			return `https://media.githubusercontent.com/media/${owner}/${repo}/${ref}/model.onnx`;
+		}
+
 		async function getInferenceSession()
 		{
 			if (!sessionPromise)
 			{
-				sessionPromise = await ort.InferenceSession.create("model.onnx", {
+				const onnxPath = await resolveModelPath();
+				sessionPromise = await ort.InferenceSession.create(onnxPath, {
 					executionProviders: ["webgl", "wasm"],
 				});
 			}
@@ -117,6 +176,7 @@
 			async update(text)
 			{
 				this._content.innerHTML = "<p>" + text + "</p>";
+				await new Promise(resolve => requestAnimationFrame(resolve));
 			}
 		}
 
@@ -143,7 +203,7 @@
 				}
 				return maxIndex;
 			}
-			const maxGenSize = 2048;
+			const maxGenSize = 512;
 			const startToken = vocabulary._vocabularyMap[startSequenceCharacter];
 			const endToken = vocabulary._vocabularyMap[endSequenceCharacter];
 			const nullToken = vocabulary._vocabularyMap[nullCharacter];
@@ -154,6 +214,8 @@
 
 			const maxSequenceLength = session.inputMetadata[0].shape[1]
 			let tokens = [startToken, ...tokenizerEncode(vocabulary, text)];
+
+			await responseContext.update(text)
 
 			while (tokens.length < maxGenSize)
 			{
@@ -187,8 +249,7 @@
 
 				tokens.push(genToken);
 
-				responseContext.update(tokenizerDecode(vocabulary, tokens.slice(1, tokens.length-1)))
-				await new Promise(resolve => requestAnimationFrame(resolve));
+				await responseContext.update(tokenizerDecode(vocabulary, tokens.slice(1, tokens.length-1)))
 			}
 
 			tokens = tokens.slice(1, tokens.length-1);
@@ -197,13 +258,20 @@
 		
         async function changeContent()
 		{
-			var vocab = await createVocabulary();
-			var session = await getInferenceSession();
-			const input = document.getElementById("comment").value;
-			const tokens = tokenizerEncode(vocab, input)
+			askButton.disabled = true;
+			try
+			{
+				var vocab = await createVocabulary();
+				var session = await getInferenceSession();
 			
-			context = new ResponseContext(document.getElementById("dynamicContent"))
-			const response = await infer(input, vocab, context, session);
+				const input = document.getElementById("comment").value;
+				context = new ResponseContext(document.getElementById("dynamicContent"))
+				const response = await infer(input, vocab, context, session);
+			}
+			finally
+			{
+				askButton.disabled = false;
+			}
         }
     </script>
 

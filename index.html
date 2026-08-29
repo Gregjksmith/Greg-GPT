@@ -91,6 +91,7 @@
         <p></p>
 
         <button id="askButton" onclick="changeContent()">Chat</button>
+		<button id="stopButton" onclick="abortInference()" disabled>Stop</button>
 
         <div class="content" id="dynamicContent">
             <p></p>
@@ -99,15 +100,18 @@
 
     <script>
 		let sessionPromise = null;
+		let inferenceAborted = false;
 
 		const commentInput = document.getElementById("comment");
 		const askButton = document.getElementById("askButton");
+		const stopButton = document.getElementById("stopButton");
 
 		window.addEventListener('load', async () => 
 			{ 
 				try
 				{
-					askButton.disabled = true
+					askButton.disabled = true;
+					stopButton.disabled = true;
 					commentInput.textContent = "Loading...";
 
 					await getInferenceSession();
@@ -116,13 +120,13 @@
 
 					//has finshied loading
 					commentInput.disabled = false;
-					askButton.disabled = false
+					askButton.disabled = false;
 
 					loadingMessage.textContent = "";
 				}
 				catch (error)
 				{
-					console.error("Failed to load Greg-GPT", error)
+					console.error("Failed to load Greg-GPT", error);
 
 					loadingMessage.textContent = "Unable to load Greg-GPT. Please refresh the page.";
 					commentInput.disabled = true;
@@ -186,7 +190,7 @@
 			{
 				const dims = _tensor.dims;
 				const data = _tensor.data;
-				const batchIndex = dims[0]
+				const batchIndex = dims[0];
 				const sequenceLength = dims[1];
 				const vocabularySize = dims[2];
 
@@ -208,24 +212,27 @@
 			const endToken = vocabulary._vocabularyMap[endSequenceCharacter];
 			const nullToken = vocabulary._vocabularyMap[nullCharacter];
 
-			const inputTokenName = session.inputNames[0]
-			const inputMaskName = session.inputNames[1]
-			const outputName = session.outputNames[0]
+			const inputTokenName = session.inputNames[0];
+			const inputMaskName = session.inputNames[1];
+			const outputName = session.outputNames[0];
 
-			const maxSequenceLength = session.inputMetadata[0].shape[1]
+			const maxSequenceLength = session.inputMetadata[0].shape[1];
 			let tokens = [startToken, ...tokenizerEncode(vocabulary, text)];
 
-			await responseContext.update(text)
+			await responseContext.update(text);
 
 			while (tokens.length < maxGenSize)
 			{
+				if (inferenceAborted)
+					return;
+
 				let tokenInputs = [...tokens];
 				//if the token inputs are greater than the max input length get the last 'maxSequenceLength' characters.
 				if (tokenInputs.length > maxSequenceLength)
 					tokenInputs = tokenInputs.slice(-maxSequenceLength);
 
 				//get the index corresponding to the next generated token.
-				output_index = tokenInputs.length - 1
+				output_index = tokenInputs.length - 1;
 				
 				//padd the input tokens.
 				while (tokenInputs.length < maxSequenceLength)
@@ -249,30 +256,39 @@
 
 				tokens.push(genToken);
 
-				await responseContext.update(tokenizerDecode(vocabulary, tokens.slice(1, tokens.length-1)))
+				await responseContext.update(tokenizerDecode(vocabulary, tokens.slice(1, tokens.length-1)));
 			}
 
 			tokens = tokens.slice(1, tokens.length-1);
-			return tokenizerDecode(vocabulary, tokens)
+			return tokenizerDecode(vocabulary, tokens);
 		}
 		
         async function changeContent()
 		{
+			inferenceAborted = false;
 			askButton.disabled = true;
+			stopButton.disabled = false;
 			try
 			{
 				var vocab = await createVocabulary();
 				var session = await getInferenceSession();
 			
 				const input = document.getElementById("comment").value;
-				context = new ResponseContext(document.getElementById("dynamicContent"))
+				context = new ResponseContext(document.getElementById("dynamicContent"));
 				const response = await infer(input, vocab, context, session);
 			}
 			finally
 			{
 				askButton.disabled = false;
+				stopButton.disabled = true;
 			}
         }
+
+		function abortInference()
+		{
+			inferenceAborted = true;
+		}
+		
     </script>
 
 </body>
